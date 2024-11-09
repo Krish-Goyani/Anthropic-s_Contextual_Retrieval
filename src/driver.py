@@ -15,7 +15,7 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-class driver:
+class Driver:
     def __init__(self):
         self.docs = load_pdf_documents(directory_path="local_database")
 

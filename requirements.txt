@@ -7,3 +7,4 @@ pinecone-client
 rank_bm25
 langchain-cohere
 python-dotenv
+streamlit
