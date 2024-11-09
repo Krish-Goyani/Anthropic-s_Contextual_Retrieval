@@ -30,8 +30,13 @@ class driver:
     def retrieve_and_rerank(self,input_dict):
         try:
             logger.info("Starting document retrieval and reranking")
-            question = input_dict["question"]
-            docs = self.ensemble_retriever.get_relevant_documents(question)
+            # Extract question from input dict
+            if isinstance(input_dict, dict):
+                question = input_dict.get("question")
+            else:
+                question = input_dict  # If directly passed as string
+
+            docs = self.ensemble_retriever.invoke(question)
             reranked_context = rerank_documents(docs, question)
             logger.info("Successfully completed retrieval and reranking")
             return reranked_context
@@ -42,22 +47,19 @@ class driver:
             raise
 
 
-    def get_rag_chain(self,
-        question_template: str = """Answer the question based on the following context:
-        Context: {context}
-        Question: {question}
-        Answer: """
-    ):
-
+    def get_rag_chain(self):
         try:
-            logger.info("Starting RAG chain")
-
+            logger.info("Initializing RAG chain")
+            
             # Create prompt template
             prompt = PromptTemplate(
-                template=question_template,
+                template="""Answer the question based on the following context only:
+                Context: {context}
+                Question: {question}
+                Answer: """,
                 input_variables=["context", "question"]
             )
-
+            
             # Configure LLM
             try:
                 google_api_key = os.getenv("GOOGLE_API_KEY")
@@ -73,8 +75,10 @@ class driver:
             
             # Define the pipeline
             rag_chain = (
-                {"context": lambda x: self.retrieve_and_rerank({"question": x}), 
-                    "question": RunnablePassthrough()}
+                {
+                    "context": lambda x: self.retrieve_and_rerank(x["question"]),  # Pass just the question string
+                    "question": RunnablePassthrough()
+                }
                 | prompt
                 | llm
                 | StrOutputParser()
@@ -82,9 +86,9 @@ class driver:
             
             logger.info("Successfully initialized RAG chain")
             return rag_chain
-            
+        
         except Exception as e:
-            logger.error("Fatal error in RAG chain initialization")
+            logger.error("Fatal error in get_rag_chain")
             logger.error(f"Error details: {str(e)}")
             raise
 

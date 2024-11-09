@@ -124,7 +124,7 @@ def enrich_chunks_with_context(
                             'processing_status': 'failed'
                         }
                     ))
-                    
+
         logger.info(f"Chunk enrichment completed. Processed {len(enriched_documents)} chunks in total")
         return enriched_documents
     
