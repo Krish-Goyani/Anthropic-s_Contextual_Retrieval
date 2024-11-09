@@ -1,22 +1,96 @@
+from langchain_google_genai import GoogleGenerativeAI
+from langchain_core.documents import Document
+from langchain_core.runnables import RunnablePassthrough
+from langchain_core.output_parsers import StrOutputParser
+from langchain_core.prompts import PromptTemplate
 from src.data_loader import load_pdf_documents
 from src.chunk_enriching import enrich_chunks_with_context
 from src.pinecon_retriever import get_pinecone_retriever
 from src.BM25_retriever import get_BM25_retriever
 from src.ensemble_retriever import get_ensemble_retriever
-from src.get_RAG_chain import get_rag_chain
-def driver():
-    docs = load_pdf_documents(directory_path="local_database")
+from src.re_ranker import rerank_documents
+from RAG_Logger import logger
+import os   
+from dotenv import load_dotenv
 
-    enriched_docs = enrich_chunks_with_context(docs)
+load_dotenv()
 
-    pinecone_retriever = get_pinecone_retriever(index_name="contextual-embeddings", chunks=enriched_docs)
+class driver:
+    def __init__(self):
+        self.docs = load_pdf_documents(directory_path="local_database")
 
-    bm25_retriever = get_BM25_retriever(docs=enriched_docs)
+        self.enriched_docs = enrich_chunks_with_context(self.docs)
 
-    ensemble_retriever = get_ensemble_retriever(pinecone_retriever, bm25_retriever)
+        self.pinecone_retriever = get_pinecone_retriever(index_name="contextual-embeddings", chunks=self.enriched_docs)
 
-    rag_chain = get_rag_chain()
+        self.bm25_retriever = get_BM25_retriever(docs=self.enriched_docs)
 
-    return rag_chain
+        self.ensemble_retriever = get_ensemble_retriever(self.pinecone_retriever, self.bm25_retriever)
+
+    def retrieve_and_rerank(self,input_dict):
+        try:
+            logger.info("Starting document retrieval and reranking")
+            question = input_dict["question"]
+            docs = self.ensemble_retriever.get_relevant_documents(question)
+            reranked_context = rerank_documents(docs, question)
+            logger.info("Successfully completed retrieval and reranking")
+            return reranked_context
+            
+        except Exception as e:
+            logger.error("Fatal error in retrieve_and_rerank")
+            logger.error(f"Error details: {str(e)}")
+            raise
+
+
+    def get_rag_chain(self,
+        question_template: str = """Answer the question based on the following context:
+        Context: {context}
+        Question: {question}
+        Answer: """
+    ):
+
+        try:
+            logger.info("Starting RAG chain")
+
+            # Create prompt template
+            prompt = PromptTemplate(
+                template=question_template,
+                input_variables=["context", "question"]
+            )
+
+            # Configure LLM
+            try:
+                google_api_key = os.getenv("GOOGLE_API_KEY")
+                if not google_api_key:
+                    raise ValueError("GOOGLE_API_KEY environment variable not found")
+                    
+                llm = GoogleGenerativeAI(model="gemini-1.5-flash", api_key=google_api_key)
+                logger.debug("Successfully initialized LLM")
+            except Exception as e:
+                logger.error("Failed to initialize LLM")
+                logger.error(f"Error details: {str(e)}")
+                raise
+            
+            # Define the pipeline
+            rag_chain = (
+                {"context": lambda x: self.retrieve_and_rerank({"question": x}), 
+                    "question": RunnablePassthrough()}
+                | prompt
+                | llm
+                | StrOutputParser()
+            )
+            
+            logger.info("Successfully initialized RAG chain")
+            return rag_chain
+            
+        except Exception as e:
+            logger.error("Fatal error in RAG chain initialization")
+            logger.error(f"Error details: {str(e)}")
+            raise
+
+
+
+
+
 
     

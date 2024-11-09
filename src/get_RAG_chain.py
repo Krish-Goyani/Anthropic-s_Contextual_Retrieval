@@ -11,19 +11,7 @@ from dotenv import load_dotenv
 from RAG_Logger import logger
 load_dotenv()
 
-def retrieve_and_rerank(input_dict):
-    try:
-        logger.info("Starting document retrieval and reranking")
-        question = input_dict["question"]
-        docs = ensemble_retriever.get_relevant_documents(question)
-        reranked_context = rerank_documents(docs, question)
-        logger.info("Successfully completed retrieval and reranking")
-        return reranked_context
-        
-    except Exception as e:
-        logger.error("Fatal error in retrieve_and_rerank")
-        logger.error(f"Error details: {str(e)}")
-        raise
+
       
 
 
