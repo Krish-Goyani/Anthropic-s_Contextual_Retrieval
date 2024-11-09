@@ -3,12 +3,12 @@ from langchain_core.documents import Document
 from langchain_core.runnables import RunnablePassthrough
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import PromptTemplate
-from src.data_loader import load_pdf_documents
-from src.chunk_enriching import enrich_chunks_with_context
-from src.pinecon_retriever import get_pinecone_retriever
-from src.BM25_retriever import get_BM25_retriever
-from src.ensemble_retriever import get_ensemble_retriever
-from src.re_ranker import rerank_documents
+from src.data_preprocessing.data_loader import load_pdf_documents
+from src.data_preprocessing.chunk_enriching import enrich_chunks_with_context
+from src.retriever.pinecon_retriever import get_pinecone_retriever
+from src.retriever.BM25_retriever import get_BM25_retriever
+from src.retriever.ensemble_retriever import get_ensemble_retriever
+from src.Ranking.re_ranker import rerank_documents
 from RAG_Logger import logger
 import os   
 from dotenv import load_dotenv
