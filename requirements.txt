@@ -1,0 +1,8 @@
+langchain_community
+pypdf
+langchain_google_genai
+langchain-pinecone
+langchain-core
+pinecone-client
+rank_bm25
+langchain-cohere
