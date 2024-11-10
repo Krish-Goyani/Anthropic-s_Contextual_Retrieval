@@ -41,7 +41,9 @@ def process_uploaded_file(uploaded_file):
         return False
 
 def main():
-    st.title("PDF Question Answering System")
+    st.title("Anthropic's Contextual RAG 🤖")
+    st.divider()
+    st.subheader("One of the most advanced RAG systems in the world 🔥", divider="red")
     
     # Initialize session state
     initialize_session_state()
@@ -51,21 +53,21 @@ def main():
     uploaded_file = st.file_uploader("Choose a PDF file", type="pdf")
     
     if uploaded_file is not None and not st.session_state.pdf_loaded:
-        with st.spinner("Processing PDF..."):
+        with st.spinner("Processing PDF...⏳"):
             success = process_uploaded_file(uploaded_file)
             if success:
-                st.success("PDF processed successfully!")
+                st.success("PDF processed successfully! ✅ ")
             else:
-                st.error("Error processing PDF. Please try again.")
+                st.error("Error processing PDF. Please try again. ❌")
     
     # Question answering section
     if st.session_state.pdf_loaded:
-        st.subheader("Ask a Question")
+        st.subheader("Ask a Question 💭")
         
         # Question input
         question = st.text_input("Enter your question:")
         
-        if st.button("Get Answer"):
+        if st.button("Get Answer 🔍"):
             if question:
                 try:
                     with st.spinner("Generating answer..."):
@@ -73,32 +75,38 @@ def main():
                         response = st.session_state.rag_chain.invoke({"question": question})
                         
                         # Display response
-                        st.subheader("Answer:")
+                        st.subheader("Answer 💡:")
                         st.markdown(response)
                         
                 except Exception as e:
                     logger.error(f"Error generating answer: {str(e)}")
                     st.error("Error generating answer. Please try again.")
             else:
-                st.warning("Please enter a question.")
+                st.warning("Please enter a question.⚠️")
     
     # Instructions
     with st.sidebar:
         st.subheader("Instructions")
         st.write("""
-        1. Upload a PDF file using the file uploader
-        2. Wait for the PDF to be processed
-        3. Enter your question in the text box
-        4. Click 'Get Answer' to see the response
+        1. Upload a PDF file using the file uploader 📄
+        2. Wait for the PDF to be processed ⏳
+        3. Enter your question in the text box ✍️
+        4. Click 'Get Answer' to see the response 🔍
         """)
         
         # Add some information about the system
         st.subheader("About")
         st.write("""
-        This system uses Anthropic's Contextual Retrieval Augmented Generation (RAG) to answer 
+        This system is demo of Anthropic's Contextual Retrieval Augmented Generation (RAG) to answer 
         questions about your PDF document. It processes the document and 
         uses advanced AI to generate accurate answers based on the content.
+        for more information about this RAG, visit [Anthropic's RAG](https://www.anthropic.com/news/contextual-retrieval)
+                 
         """)
+        
+        st.write("Made with ❤️ by [Krish Goyani](https://github.com/Krish-Goyani)")
+    
+    
 
 if __name__ == "__main__":
     main()
